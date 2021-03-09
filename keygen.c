@@ -23,7 +23,7 @@ int main(int argc, char** argv) {
       int num = random() % 27; //Get a random number between 1-26
       key[i] = alphaNum[num]; //Copy random character into key buffer
    }
-   key[keylength];
+   key[keylength] = 0;
 
    printf("%s\n", key);
 
