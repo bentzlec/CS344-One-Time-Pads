@@ -15,7 +15,7 @@ int main(int argc, char** argv) {
    keylength = atoi(argv[1]); //Get the desire key length from command line arguments array
    char key[(keylength + 1)]; //Make buffer to hold the key
 
-   char * alphaNum = " ABCDEFGHIJKLMNOPQRSTUVWXYZ"; //array to hold the characters to be randomly selected for the key
+   char * alphaNum = "ABCDEFGHIJKLMNOPQRSTUVWXYZ "; //array to hold the characters to be randomly selected for the key
 
    srand(time(NULL));
 

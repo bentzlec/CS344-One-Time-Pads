@@ -7,7 +7,32 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 
+
+
 #define SIZE 100000
+
+int removeChar (int idx) {
+   if (idx == 26) {
+      return ' ';
+   } else {
+      return (idx + 'A');
+   }
+
+}
+
+void encrypt(char input[], char key[]) {
+   int i = 0;
+   char currChar;
+
+   while(input[i] != '\n') {
+      currChar = input[i];
+      currChar = (removeChar(input[i]) + removeChar(key[i])) % 27;
+      input[i] = removeChar(currChar);
+      i++;
+   }
+   input[i] = '\0';
+   return;
+}
 
 int main(int argc, char * argv[]) {
    if (argc < 2) {
@@ -19,6 +44,7 @@ int main(int argc, char * argv[]) {
    struct sockaddr_in servAdd, clientAdd; 
    memset((char *) &servAdd, '\0', sizeof(servAdd)); //Clear the struct
    int portNum = atoi(argv[1]); //Get port number from arguments
+   int i = 0;
    servAdd.sin_family = AF_INET; 
    servAdd.sin_port = htons(portNum); //Set port num
    servAdd.sin_addr.s_addr = INADDR_ANY; //Set to allow connection from any address
@@ -55,25 +81,24 @@ int main(int argc, char * argv[]) {
 	 exit(1);
       }else if (pid == 0) { //if child
 	 char buff[1024];
-	 char * encMessage[SIZE];
-	 char message[SIZE];
-	 char key[SIZE];
+	 char message[10000];
+	 char key[1000];
 
 	 memset(buff, '\0', sizeof(buff));
 
-	 int i = 0;
-	 
 	 while(i == 0) {
 	    i = recv(connectFD, buff, sizeof(buff) - 1, 0);
 	 }
 
 	 if(strcmp(buff, "Handshake") != 0) {
-	    i = send(connectFD, "Bad Connection", 14, 0);
+	    i = send(connectFD, "Bad Port", strlen("Bad Port"), 0);
 	    exit(1);
 	 }else {
+	    printf("Handshake received!\n");
+	    fflush(stdout);
 	    memset(buff, '\0', sizeof(buff));
 
-	    i = send(connectFD, "Good Connection", 15, 0);
+	    i = send(connectFD, "Handshake", 9, 0);
 	    i = 0;
 
 	    while(i == 0) { 
@@ -81,28 +106,37 @@ int main(int argc, char * argv[]) {
 	    }
 
 	    int len = atoi(buff);
+	    printf("Serverside file length: %i\n\n", len);
 
 	    memset(buff, '\0', sizeof(buff));
 
-	    for(int i = 0; i < len; i++) {
+	    i = 0;
+	    while(i <= len) {
 	       i += recv(connectFD, buff, sizeof(buff) - 1, 0);
-
-	       strcat(message, buff);
+	       strcat(key, buff);
+	       printf("Key received from client: %s\n", key);
 	    }
+	    printf("Key received from client: %s\n", key);
+
 
 	    memset(buff, '\0', sizeof(buff));
 	    
-	    for(int i = 0; i < len; i++) {
+	    i = 0;
+	    while(i <= len) {
 	       i += recv(connectFD, buff, sizeof(buff) - 1, 0);
-	       strcat(key, buff);
+	       strcat(message, buff);
 	    }
+	    //printf("Message received from client: %s\n", message);
+	    printf("Key received from client: %s\n", key);
 
 	    memset(buff, '\0', sizeof(buff));
 
-	    //encrypt the message here
+	    encrypt(message, key);
 
-	    for(int i = 0; i < len; i++) {
-	       i += send(connectFD, encMessage, sizeof(message), 0);
+	    printf("Encrytpyed message: %s\n\n", message);
+	    i = 0;
+	    while(i < len) {
+	       i += send(connectFD, message, sizeof(message), 0);
 	    }
 
 	    exit(0);

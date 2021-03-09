@@ -20,4 +20,4 @@ keygen: keygen.c
 	gcc: $^ -std=gnu99 -o $@ ${CFLAGS}
 
 clean:
-	rm -f enc_client enc_sever dec_client dec_server keygen
+	rm -f enc_client enc_server dec_client dec_server keygen
