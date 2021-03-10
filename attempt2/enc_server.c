@@ -140,32 +140,35 @@ int main(int argc, char *argv[]) {
 
 	    for(i = 0; i < bytesRead; i++) {
 	       if(curr[i] == '\n') {
-		  lines++;
+		  lines++; //Count number of lines
 		  if(lines == 1) {
-		     currKey = (curr + i + 1);
+		     currKey = (curr + i + 1); //Where key index is
 		  }
 	       }
 	    }
 
-	    if(lines == 2) {
+	    if(lines == 2) { //We have read the key and message
 	       break;
 	    }
+
+	    //Iterate indexes
 	    curr = (curr + bytesRead);
 	    bytesLeft = (bytesLeft - bytesRead);
 	 }
+	 //buffer to hold the encrypted message
 	 char encrypted[10000];
-	 memset(encrypted, '\0', sizeof(encrypted));
+	 memset(encrypted, '\0', sizeof(encrypted)); //Clear buffer
 
-	 strncpy(encrypted, buff, (currKey - buff));
+	 strncpy(encrypted, buff, (currKey - buff)); //copy message into buffer to be encrypted
 
-	 encrypt(encrypted, currKey);
+	 encrypt(encrypted, currKey); //Encrypt the message
 
-	 write(newSock, encrypted, sizeof(encrypted));
+	 write(newSock, encrypted, sizeof(encrypted)); //Write encrypted msg to client
       }
-      close(newSock);
+      close(newSock); //Close socket
 
       while(pid > 0) {
-	 pid = waitpid(-1, &status, WNOHANG);
+	 pid = waitpid(-1, &status, WNOHANG); //Wait for child proc
       }
    }
    close(sock);

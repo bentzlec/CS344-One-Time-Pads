@@ -10,11 +10,11 @@
 int charToInt(char c) {
    int i = 0;
    if(c == ' ') {
-      i = 26;
+      return 26;
    }else {
-      i = (c - 'A');
+      return(c - 'A');
    }
-   return i;
+   return 0;
 }
 
 //Functio that returns char when given ASCII value
@@ -27,19 +27,19 @@ char intToChar(int i) {
 }
 
 void decrypt(char msg[], char key[]) {
-   int i;
-   char n;
+   int i; //Keep index
+   char n; //Keep curr char
 
-   for(i = 0; msg[i] != '\n'; i++) {
-      n = charToInt(msg[i]) - charToInt(msg[i]);
+   //printf("Message: %s\n", msg);
+   //printf("Key: %s\n", key);
+   for (i = 0; msg[i] != '\n'; i++) { //iterate through message to end of line
+      n = (charToInt(msg[i]) - charToInt(key[i])); //Get ascii value
       if(n < 0) {
-	 n = (n + 27);
+	 n += 27;
       }
-      msg[i] = intToChar(n);
+      msg[i] = intToChar(n); 
    }
-   msg[i] = '\0';
-
-   printf("Decrypted message on serverside: %s\n", msg);
+   msg[i] = '\0'; //Set end of message to null
    return;
 }
 
@@ -119,22 +119,26 @@ int main(int argc, char *argv[]) {
 	    exit(1);
 	 }else {
 	    char handshake[] = "server";
-	    write(newSock, handshake, sizeof(handshake));
+	    write(newSock, handshake, sizeof(handshake)); //Write back if the handshake is good
 	 }
-	 memset(buff, '\0', sizeof(buff));
+	 memset(buff, '\0', sizeof(buff)); //Clear the buffer
+
+	 //Hold index of where the key is in the buffer
 	 char *keyIdx = buff;
 
+	 //Infinite loop
 	 while(1) {
-	    bytesRead = read(newSock, keyIdx, bytesLeft);
+	    bytesRead = read(newSock, keyIdx, bytesLeft); //Read from client and track bytes read
 	    
-	    if(bytesRead == 0) {
+	    if(bytesRead == 0) { //End of file
 	       break;
-	    }else if(bytesRead < 0) {
+	    }else if(bytesRead < 0) { //Error case
 	       printf("Error reading from clientside! (Serverside)\n");
 	       fflush(stdout);
 	       exit(1);
 	    }
 
+	    //Count the number of lines
 	    for(i = 0; i < bytesRead; i++) {
 	       if(keyIdx[i] == '\n') {
 		  lines++;
@@ -144,28 +148,30 @@ int main(int argc, char *argv[]) {
 	       }
 	    }
 
-	    if(lines == 2) {
+	    if(lines == 2) { //Done reading
 	       break;
 	    }
 
-	    currKey = (currKey + bytesRead);
-	    bytesLeft = (bytesLeft - bytesRead);
+	    keyIdx = (keyIdx + bytesRead); //Move idx to where key is located 
+	    bytesLeft = (bytesLeft - bytesRead); //change idx of where we are in file read
 	 }
-	 char message[10000];
-	 memset(message, '\0', sizeof(message));
-	 strncpy(message, buff, (currKey - buff));
-	 decrypt(message, currKey);
+	 //Buffer to hold the message
+	 char message[10000]; 
+	 memset(message, '\0', sizeof(message)); //clear the buffer
 
-	 write(newSock, message, sizeof(message));
+	 //Copy into the buffer
+	 strncpy(message, buff, (currKey - buff));
+	 decrypt(message, currKey); //Decrypt the message
+
+	 write(newSock, message, sizeof(message)); //Send to client
       }
       close(newSock);
 
       while(pid > 0) {
-	 pid = waitpid(-1, &status, WNOHANG);
+	 pid = waitpid(-1, &status, WNOHANG); //Wait for child processes
       }
    }
    close(sock);
-
 
    return 0;
 }

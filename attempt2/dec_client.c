@@ -46,20 +46,20 @@ void sendFile(char *filename, int sock, int length) {
 void getFile(int sock) {
    int n;
    char buff[10000];
-   memset(buff, '\0', sizeof(buff));
+   memset(buff, '\0', sizeof(buff)); //Make and clear buffer
 
    //Infinite while loop
    while(1) {
-      int bytesRead;
-      bytesRead = read(sock, buff, sizeof(buff));
-      if(bytesRead == 0) {
+      int bytesRead; //Keep index of bytes read
+      bytesRead = read(sock, buff, sizeof(buff)); //Read from socket
+      if(bytesRead == 0) { //Finished reading file
 	 break;
-      }else if(bytesRead < 0) {
+      }else if(bytesRead < 0) { //If there's an error reading 
 	 printf("Error reading (clientside)\n");
 	 fflush(stdout);
 	 exit(1);
-      }else {
-	 n = write(1, buff, bytesRead);
+      }else { 
+	 n = write(1, buff, bytesRead); //Retrieve
 	 if(n < 0) {
 	    printf("Error writing! (Clientside)\n");
 	    fflush(stdout);
@@ -104,15 +104,16 @@ int main(int argc, char *argv[]) {
    char buff[10000];
    memset(buff, '\0', sizeof(buff));
 
-    
+   //Get port number from command line   
    portNum = atoi(argv[3]);
-   sock = socket(AF_INET, SOCK_STREAM, 0);
-   if(sock < 0) {
+   sock = socket(AF_INET, SOCK_STREAM, 0); //Make the socket
+   if(sock < 0) { 
       printf("Error creating socket! (clientside)\n");
       fflush(stdout);
       exit(1);
    }
 
+   //Get hostname "localhost"
    server = gethostbyname("localhost");
    if(server == NULL) {
       printf("Error getting host name!\n");
@@ -120,12 +121,13 @@ int main(int argc, char *argv[]) {
       exit(1);
    }
    optval = 1;
-   setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(int)); 
-   memset((char*)&serverAddress, '\0', sizeof(serverAddress));
-   serverAddress.sin_family = AF_INET;
-   memcpy((char*)&serverAddress.sin_addr.s_addr, (char*)server->h_addr, server->h_length);
-   serverAddress.sin_port = htons(portNum);
+   setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(int)); //Set for reuse
+   memset((char*)&serverAddress, '\0', sizeof(serverAddress)); //Clear the struct
+   serverAddress.sin_family = AF_INET; 
+   memcpy((char*)&serverAddress.sin_addr.s_addr, (char*)server->h_addr, server->h_length); 
+   serverAddress.sin_port = htons(portNum); //Put port num in
 
+   //Attempt connection
    if(connect(sock, (struct sockaddr*) &serverAddress, sizeof(serverAddress)) < 0) {
       printf("Error on connection! (clientside)\n");
       fflush(stdout);
@@ -134,32 +136,37 @@ int main(int argc, char *argv[]) {
 
    //Handshake
    char handshake[] = "client";
-   write(sock, handshake, sizeof(handshake));
-   read(sock, buff, sizeof(buff));
-   if(strcmp(buff, "server") != 0) {
+   write(sock, handshake, sizeof(handshake)); //Write handshake message to server
+   read(sock, buff, sizeof(buff)); //Hopefully get handshake message back
+   if(strcmp(buff, "server") != 0) { //If handshake doesn't work
       printf("Error on handshake! (Clientside)\n");
       fflush(stdout);
       exit(1);
    }
 
+   //Read in file names
    long plainTextLen = getFileLen(argv[1]);
    long keyLen = getFileLen(argv[2]);
 
+   //If the key length isn't long enough, exit
    if(plainTextLen > keyLen) {
       printf("Key is too short!\n");
       fflush(stdout);
       exit(1);
    }
 
+   //Send files to server
    sendFile(argv[1], sock, plainTextLen);
    sendFile(argv[2], sock, keyLen);
-   n = read(sock, buff, sizeof(buff));
 
+   //Read from server
+   n = read(sock, buff, sizeof(buff));
    if(n < 0) {
       printf("Error reading from server!\n");
       exit(1);
    }
 
+   //Print the decrypted message and close socket
    printf("%s\n", buff);
    close(sock);
 
